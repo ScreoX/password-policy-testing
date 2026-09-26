@@ -1,2 +1,7 @@
 .idea/
 .DS_Store
+
+allure-results/
+allure-report/
+coverage.out
+coverage.html

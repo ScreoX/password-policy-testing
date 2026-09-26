@@ -31,17 +31,17 @@ import (
 // найти эти расхождения тестами, написанными по спецификации.
 type PasswordPolicy struct{}
 
-// MinLength: минимальная длина пароля.
+// MinLength минимальная длина пароля.
 const MinLength = 8
 
-// MaxLength: максимальная допустимая длина пароля.
+// MaxLength максимальная допустимая длина пароля.
 const MaxLength = 64
 
-// Special: символы, которые считаются специальными.
+// Special символы, которые считаются специальными.
 const Special = "!@#$%^&*()-_=+"
 
 // ErrNilPassword возвращается, если пароль равен nil.
-var ErrNilPassword = errors.New("Пароль не может быть nil")
+var ErrNilPassword = errors.New("пароль не может быть nil")
 
 var blacklist = map[string]struct{}{
 	"password": {},
@@ -110,7 +110,7 @@ func (PasswordPolicy) CheckWithLogin(password *string, login *string) (Result, e
 	if length < MinLength {
 		found = append(found, TooShort)
 	}
-	if length > MaxLength-1 {
+	if length > MaxLength {
 		found = append(found, TooLong)
 	}
 
@@ -154,7 +154,7 @@ func (PasswordPolicy) CheckWithLogin(password *string, login *string) (Result, e
 	if login != nil && *login != "" && strings.Contains(strings.ToLower(value), strings.ToLower(*login)) {
 		found = append(found, ContainsLogin)
 	}
-	if _, exists := blacklist[value]; exists {
+	if _, exists := blacklist[strings.ToLower(value)]; exists {
 		found = append(found, Blacklisted)
 	}
 
@@ -172,7 +172,7 @@ func hasRepeatedRun(value string) bool {
 			previous = current
 			run = 1
 		}
-		if run > 3 {
+		if run >= 3 {
 			return true
 		}
 	}
