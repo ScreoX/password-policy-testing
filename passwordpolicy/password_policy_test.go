@@ -150,6 +150,7 @@ func TestPasswordPolicyRepeatedRun(t *testing.T) {
 		isRepeated bool
 	}{
 		{name: "Повтор 2 раза допустим", password: "He!1llWo", isRepeated: false},
+		// PP-2: серия из трех одинаковых символов должна считаться нарушением
 		{name: "Повтор 3 раза добавляет нарушение", password: "He!1lllW", isRepeated: true},
 		{name: "Повтор 4 раза добавляет нарушение", password: "He!1llll", isRepeated: true},
 	}
@@ -200,6 +201,7 @@ func TestPasswordPolicyBlacklist(t *testing.T) {
 		{name: "123456 находится в списке", password: "123456", want: true},
 		{name: "admin находится в списке", password: "admin", want: true},
 		{name: "welcome находится в списке", password: "welcome", want: true},
+		// PP-3: blacklist должен проверяться без учета регистра
 		{name: "Регистр PaSsWoRd не влияет на проверку", password: "PaSsWoRd", want: true},
 		{name: "Регистр QwErTy не влияет на проверку", password: "QwErTy", want: true},
 		{name: "Регистр AdMiN не влияет на проверку", password: "AdMiN", want: true},
@@ -267,6 +269,7 @@ func lengthBoundaryCases() []lengthBoundaryCase {
 	return []lengthBoundaryCase{
 		{name: "Длина 7 слишком короткая", password: "He!1loW", violations: []Violation{TooShort}},
 		{name: "Длина 8 допустима", password: validPassword, violations: nil},
+		// PP-1: пароль длиной 64 символа должен быть допустим по правилу длины
 		{name: "Длина 64 допустима", password: "He!1" + strings.Repeat("lo", 30), violations: nil},
 		{name: "Длина 65 слишком большая", password: "He!1" + strings.Repeat("lo", 30) + "W", violations: []Violation{TooLong}},
 	}
