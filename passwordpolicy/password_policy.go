@@ -31,17 +31,17 @@ import (
 // найти эти расхождения тестами, написанными по спецификации.
 type PasswordPolicy struct{}
 
-// MinLength: минимальная длина пароля.
+// MinLength минимальная длина пароля.
 const MinLength = 8
 
-// MaxLength: максимальная допустимая длина пароля.
+// MaxLength максимальная допустимая длина пароля.
 const MaxLength = 64
 
-// Special: символы, которые считаются специальными.
+// Special символы, которые считаются специальными.
 const Special = "!@#$%^&*()-_=+"
 
 // ErrNilPassword возвращается, если пароль равен nil.
-var ErrNilPassword = errors.New("Пароль не может быть nil")
+var ErrNilPassword = errors.New("пароль не может быть nil")
 
 var blacklist = map[string]struct{}{
 	"password": {},
