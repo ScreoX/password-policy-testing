@@ -1,9 +1,11 @@
 package passwordpolicy
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
+	allure "github.com/allure-framework/allure-go/commons/gotest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -11,23 +13,24 @@ import (
 const validPassword = "He!1loW8"
 
 func TestPasswordPolicyNilPassword(t *testing.T) {
-	policy := PasswordPolicy{}
+	runPasswordPolicyTest(t, "nil вызывает ошибку", "Пароль равен nil", func(a *allure.Context) {
+		policy := PasswordPolicy{}
 
-	result, err := policy.Check(nil)
+		result, err := policy.Check(nil)
 
-	assert.ErrorIs(t, err, ErrNilPassword)
-	assert.Empty(t, result.Violations())
+		assert.ErrorIs(a.T(), err, ErrNilPassword)
+		assert.Empty(a.T(), result.Violations())
+	})
 }
 
 func TestPasswordPolicyLength(t *testing.T) {
 	policy := PasswordPolicy{}
 
 	for _, testCase := range lengthBoundaryCases() {
-		t.Run(testCase.name, func(t *testing.T) {
-			result, err := policy.Check(&testCase.password)
-			require.NoError(t, err)
+		runPasswordPolicyTest(t, testCase.name, "Длина пароля", func(a *allure.Context) {
+			result := checkPassword(a, policy, testCase.password, nil)
 
-			assert.ElementsMatch(t, testCase.violations, result.Violations())
+			assert.ElementsMatch(a.T(), testCase.violations, result.Violations())
 		})
 	}
 }
@@ -44,11 +47,10 @@ func TestPasswordPolicyDigit(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			result, err := policy.Check(&testCase.password)
-			require.NoError(t, err)
+		runPasswordPolicyTest(t, testCase.name, "Наличие цифры", func(a *allure.Context) {
+			result := checkPassword(a, policy, testCase.password, nil)
 
-			assert.Equal(t, testCase.want, containsViolation(result, NoDigit))
+			assert.Equal(a.T(), testCase.want, containsViolation(result, NoDigit))
 		})
 	}
 }
@@ -66,11 +68,10 @@ func TestPasswordPolicyUppercase(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			result, err := policy.Check(&testCase.password)
-			require.NoError(t, err)
+		runPasswordPolicyTest(t, testCase.name, "Заглавная латинская буква", func(a *allure.Context) {
+			result := checkPassword(a, policy, testCase.password, nil)
 
-			assert.Equal(t, testCase.want, containsViolation(result, NoUpper))
+			assert.Equal(a.T(), testCase.want, containsViolation(result, NoUpper))
 		})
 	}
 }
@@ -88,11 +89,10 @@ func TestPasswordPolicyLowercase(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			result, err := policy.Check(&testCase.password)
-			require.NoError(t, err)
+		runPasswordPolicyTest(t, testCase.name, "Строчная латинская буква", func(a *allure.Context) {
+			result := checkPassword(a, policy, testCase.password, nil)
 
-			assert.Equal(t, testCase.want, containsViolation(result, NoLower))
+			assert.Equal(a.T(), testCase.want, containsViolation(result, NoLower))
 		})
 	}
 }
@@ -109,11 +109,10 @@ func TestPasswordPolicySpecial(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			result, err := policy.Check(&testCase.password)
-			require.NoError(t, err)
+		runPasswordPolicyTest(t, testCase.name, "Специальный символ", func(a *allure.Context) {
+			result := checkPassword(a, policy, testCase.password, nil)
 
-			assert.Equal(t, testCase.want, containsViolation(result, NoSpecial))
+			assert.Equal(a.T(), testCase.want, containsViolation(result, NoSpecial))
 		})
 	}
 }
@@ -133,11 +132,10 @@ func TestPasswordPolicyWhitespace(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			result, err := policy.Check(&testCase.password)
-			require.NoError(t, err)
+		runPasswordPolicyTest(t, testCase.name, "Пробельный символ", func(a *allure.Context) {
+			result := checkPassword(a, policy, testCase.password, nil)
 
-			assert.Equal(t, testCase.want, containsViolation(result, HasWhitespace))
+			assert.Equal(a.T(), testCase.want, containsViolation(result, HasWhitespace))
 		})
 	}
 }
@@ -156,11 +154,10 @@ func TestPasswordPolicyRepeatedRun(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			result, err := policy.Check(&testCase.password)
-			require.NoError(t, err)
+		runPasswordPolicyTest(t, testCase.name, "Серия одинаковых символов", func(a *allure.Context) {
+			result := checkPassword(a, policy, testCase.password, nil)
 
-			assert.Equal(t, testCase.isRepeated, containsViolation(result, RepeatedRun))
+			assert.Equal(a.T(), testCase.isRepeated, containsViolation(result, RepeatedRun))
 		})
 	}
 }
@@ -180,11 +177,10 @@ func TestPasswordPolicyContainsLogin(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			result, err := policy.CheckWithLogin(&testCase.password, testCase.login)
-			require.NoError(t, err)
+		runPasswordPolicyTest(t, testCase.name, "Пароль содержит логин", func(a *allure.Context) {
+			result := checkPassword(a, policy, testCase.password, testCase.login)
 
-			assert.Equal(t, testCase.want, containsViolation(result, ContainsLogin))
+			assert.Equal(a.T(), testCase.want, containsViolation(result, ContainsLogin))
 		})
 	}
 }
@@ -210,28 +206,27 @@ func TestPasswordPolicyBlacklist(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			result, err := policy.Check(&testCase.password)
-			require.NoError(t, err)
+		runPasswordPolicyTest(t, testCase.name, "Blacklist", func(a *allure.Context) {
+			result := checkPassword(a, policy, testCase.password, nil)
 
-			assert.Equal(t, testCase.want, containsViolation(result, Blacklisted))
+			assert.Equal(a.T(), testCase.want, containsViolation(result, Blacklisted))
 		})
 	}
 }
 
 func TestPasswordPolicyMultipleViolations(t *testing.T) {
-	policy := PasswordPolicy{}
-	password := ""
-	result, err := policy.Check(&password)
-	require.NoError(t, err)
+	runPasswordPolicyTest(t, "Несколько нарушений накапливаются одновременно", "Накопление нарушений", func(a *allure.Context) {
+		policy := PasswordPolicy{}
+		result := checkPassword(a, policy, "", nil)
 
-	assert.ElementsMatch(t, []Violation{
-		TooShort,
-		NoDigit,
-		NoUpper,
-		NoLower,
-		NoSpecial,
-	}, result.Violations())
+		assert.ElementsMatch(a.T(), []Violation{
+			TooShort,
+			NoDigit,
+			NoUpper,
+			NoLower,
+			NoSpecial,
+		}, result.Violations())
+	})
 }
 
 func TestPasswordPolicyResult(t *testing.T) {
@@ -247,11 +242,10 @@ func TestPasswordPolicyResult(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			result, err := policy.Check(&testCase.password)
-			soft := assert.New(t)
+		runPasswordPolicyTest(t, testCase.name, "Результат проверки", func(a *allure.Context) {
+			result := checkPassword(a, policy, testCase.password, nil)
+			soft := assert.New(a.T())
 
-			soft.NoError(err)
 			soft.Equal(testCase.isValid, result.IsValid())
 			soft.ElementsMatch(testCase.violations, result.Violations())
 		})
@@ -273,6 +267,41 @@ func lengthBoundaryCases() []lengthBoundaryCase {
 		{name: "Длина 64 допустима", password: "He!1" + strings.Repeat("lo", 30), violations: nil},
 		{name: "Длина 65 слишком большая", password: "He!1" + strings.Repeat("lo", 30) + "W", violations: []Violation{TooLong}},
 	}
+}
+
+func runPasswordPolicyTest(t *testing.T, name, story string, body func(*allure.Context)) {
+	t.Helper()
+
+	allure.Test(t, name, body,
+		allure.WithEpic("PasswordPolicy"),
+		allure.WithFeature("Проверка пароля по спецификации"),
+		allure.WithStory(story),
+		allure.WithParentSuite("PasswordPolicy"),
+		allure.WithSuite("Проверка пароля по спецификации"),
+		allure.WithSubSuite(story),
+	)
+}
+
+func checkPassword(a *allure.Context, policy PasswordPolicy, password string, login *string) Result {
+	a.Helper()
+
+	return allure.Step(a, "Проверить пароль", func(a *allure.Context) Result {
+		a.StepParameter("password", password)
+		if login != nil {
+			a.StepParameter("login", *login)
+		}
+
+		result, err := policy.CheckWithLogin(&password, login)
+		require.NoError(a.T(), err)
+		attachResult(a, result)
+		return result
+	})
+}
+
+func attachResult(a *allure.Context, result Result) []byte {
+	content := []byte(fmt.Sprintf("valid: %t\nviolations: %v", result.IsValid(), result.Violations()))
+	a.Attachment("Результат проверки", content, "text/plain")
+	return content
 }
 
 func containsViolation(result Result, expected Violation) bool {
